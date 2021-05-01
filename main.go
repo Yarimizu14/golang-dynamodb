@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"log"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -84,4 +85,89 @@ func main() {
 			log.Printf("Item key: %s --> %v \n", k, v)
 		}
 	}
+
+	// PutItem
+	log.Printf("\n##################\n PutItem \n##################\n")
+	{
+		now := time.Now()
+		ctx := context.Background()
+		input := dynamodb.PutItemInput{
+			TableName: &tableName,
+			Item: map[string]types.AttributeValue{
+				"dummy": &types.AttributeValueMemberS{
+					Value: fmt.Sprintf("dummy-%d", now.Unix()),
+				},
+				"timestamp": &types.AttributeValueMemberS{
+					Value: now.String(),
+				},
+			},
+		}
+		output, err := svc.PutItem(ctx, &input)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		for k, v := range output.Attributes {
+			log.Printf("Item key: %s --> %v \n", k, v)
+		}
+	}
+
+	// BatchWriteItemInput
+	log.Printf("\n##################\n BatchWriteItemInput \n##################\n")
+	{
+		now := time.Now()
+		ctx := context.Background()
+		input := dynamodb.BatchWriteItemInput{
+			RequestItems: map[string][]types.WriteRequest{
+				tableName: {
+					{
+						PutRequest: &types.PutRequest{
+							Item: map[string]types.AttributeValue{
+								"dummy": &types.AttributeValueMemberS{
+									Value: fmt.Sprintf("dummy-batch-%d", now.Unix()),
+								},
+								"timestamp": &types.AttributeValueMemberS{
+									Value: now.String(),
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		_, err := svc.BatchWriteItem(ctx, &input)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	}
+
+	// DeleteItem
+	log.Printf("\n##################\n DeleteItem \n##################\n")
+	{
+		ctx := context.Background()
+		input := dynamodb.DeleteItemInput{
+			TableName: &tableName,
+			Key: map[string]types.AttributeValue{
+				"dummy": &types.AttributeValueMemberS{
+					Value: "fuga",
+				},
+			},
+		}
+		output, err := svc.DeleteItem(ctx, &input)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		for k, v := range output.Attributes {
+			log.Printf("Item key: %s --> %v \n", k, v)
+		}
+	}
+
+	// Query
+	// UpdateItem
+	// BatchGetItem
+	// ExecuteStatement
+	// ExecuteTransaction
+	// TransactGetItems
+	// TransactWriteItems
 }
